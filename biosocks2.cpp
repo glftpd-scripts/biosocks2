@@ -17,9 +17,16 @@
 const int listenPort = 12345;
 const char* listenIP = "0.0.0.0";
 const bool authRequired = true;
-const char* authUsername = "login";
-const char* authPassword = "password";
-
+const char* authUsernames[] =
+{
+	"login1",
+	"login2"
+};
+const char* authPasswords[] =
+{
+	"password1",
+	"password2"
+};
 const char* allowedIPs[] =
 {
   "127.0.0.1",
@@ -28,6 +35,7 @@ const char* allowedIPs[] =
 };
 
 const unsigned numAllowedIPs = sizeof(allowedIPs) / sizeof(char*);
+const unsigned numUsers = sizeof(authUsernames) / sizeof(char*);
 
 const char SocksV5 = 0x05;
 const char MethodNone = 0x00, MethodUsername = 0x02, MethodInvalid = char(0xFF);
@@ -346,20 +354,20 @@ bool Client::Auth()
 
   buffer[0] = 0x01;
 
-  if (strcmp(authUsername, username) ||
-      strcmp(authPassword, password))
-  {
-    buffer[1] = ResultFail;
-
-    if (!Writen(2)) return false;
-    fprintf(stderr, "username / password authentication failed\n");
-    return false;
+  for (unsigned i = 0; i < numUsers; ++i) {
+    if(!strcmp(authUsernames[i], username)) {
+      if(!strcmp(authPasswords[i], password)) {
+        buffer[1] = ResultSuccess;
+        if (!Writen(2)) return false;
+        return true;
+      }
+    }
   }
 
-  buffer[1] = ResultSuccess;
+  buffer[1] = ResultFail;
   if (!Writen(2)) return false;
-
-  return true;
+	fprintf(stderr, "username / password authentication failed\n");
+  return false;
 }
 
 bool Client::Connect()
